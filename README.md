@@ -6,60 +6,83 @@ Built as part of the [roadmap.sh Unit Converter project](https://roadmap.sh/proj
 
 ## Stack
 
-- **[Next.js 15](https://nextjs.org/)** (App Router) + React 19 — server-rendered pages, Server Actions for form handling
-- **TypeScript** end to end
-- **[Turborepo](https://turbo.build/)** + **pnpm workspaces** — monorepo orchestration
-- **[Vitest](https://vitest.dev/)** — unit tests for the conversion domain
+- **[FastAPI](https://fastapi.tiangolo.com/)** — routes, forms, server-rendered HTML via Jinja2
+- **Jinja2** — templates for the presentation layer
+- **pytest** — unit and integration tests (TDD)
+- **ruff** + **black** — linting and PEP-8 formatting
 
 ## Project structure
 
 ```
 unit-converter/
-├── apps/
-│   └── web/               # Next.js app — routes, forms, presentation
-│       └── app/
-│           ├── length/
-│           ├── weight/
-│           └── temperature/
-└── packages/
-    └── units/             # Pure conversion domain, framework-agnostic
-        └── src/
-            ├── length.ts
-            ├── weight.ts
-            └── temperature.ts
+├── src/unit_converter/
+│   ├── units/             # Pure conversion domain, framework-agnostic
+│   │   ├── linear.py       # Shared factor-based converter (length, weight)
+│   │   ├── length.py
+│   │   ├── weight.py
+│   │   └── temperature.py  # Offset-based, kept separate from linear.py
+│   └── web/                # FastAPI app — routes, templates, presentation
+│       ├── app.py
+│       ├── categories.py
+│       ├── routes.py
+│       ├── format.py
+│       ├── validation.py
+│       ├── templates/
+│       └── static/
+└── tests/
+    ├── units/
+    └── web/
 ```
 
 ## Architecture
 
 The project is split into two layers:
 
-- **`packages/units`** is the domain layer: pure TypeScript functions (`convertLength`, `convertWeight`, `convertTemperature`) with no knowledge of HTTP, forms, or React. Each unit category exports a `Record`-based conversion table (or, for temperature, a Celsius-based intermediate step, since it involves offsets rather than a pure multiplicative factor) and a type guard (`isLengthUnit`, etc.) used to validate untyped input at the HTTP boundary. This layer is fully covered by unit tests and has zero external dependencies.
+- **`unit_converter.units`** is the domain layer: pure functions (`convert_length`,
+  `convert_weight`, `convert_temperature`) with no knowledge of HTTP, forms, or
+  templates. Length and weight share a generic `LinearUnitCategory` helper (a
+  factor table relative to a base unit); temperature is kept separate since it
+  involves offsets rather than a pure multiplicative factor. Each category also
+  exposes a type guard (`is_length_unit`, etc.) used to validate untyped input
+  at the HTTP boundary. This layer is fully covered by unit tests and has zero
+  external dependencies.
 
-- **`apps/web`** is the presentation layer. Each unit category (`length`, `weight`, `temperature`) follows the same **Post/Redirect/Get** pattern:
-  1. `page.tsx` (Server Component) reads `searchParams` — if a `result` is present, it renders `ResultCard`; otherwise, it renders `ConversionForm`.
-  2. `actions.ts` (`"use server"`) receives the submitted `FormData`, validates it against the domain's type guards, computes the result via `@repo/units`, and `redirect()`s back to the same route with the outcome encoded in the query string.
+- **`unit_converter.web`** is the presentation layer. All three categories
+  (`length`, `weight`, `temperature`) are served by a **single generic route
+  factory**, `build_conversion_router`, parameterized by a `ConversionCategory`
+  config object (units, labels, validator, converter) — there is no per-category
+  route code. Each category follows the same **Post/Redirect/Get** pattern:
+  1. `GET /{category}` renders either the result (if `result` is present in the
+     query string) or the form (plus an error message, if `error` is present).
+  2. `POST /{category}` receives the submitted form data, validates it against
+     the domain's type guards, computes the result, and redirects (303) back to
+     the same route with the outcome encoded in the query string.
 
-This means form submissions are handled with **no client-side JavaScript, no `fetch`, no `useState`** — just a native HTML form POST intercepted by a Server Action, matching the classic `target="_self"` submission flow described in the original project spec. The only client-rendered piece in the whole app is `NavTabs`, whose sole job is highlighting the active tab via `usePathname`.
+  This means form submissions are handled with **no client-side JavaScript** —
+  just a native HTML form POST handled entirely on the server.
 
 ## Getting started
 
 ```bash
-pnpm install
-pnpm dev
+uv pip install -e ".[dev]"
+uv run uvicorn unit_converter.web.app:app --reload
 ```
 
-The app runs at `http://localhost:3000` (or the next available port).
+The app runs at `http://127.0.0.1:8000`.
 
 ## Testing
 
 ```bash
-pnpm test
+uv run pytest
 ```
 
-Runs the `packages/units` test suite via Vitest, covering length, weight, and temperature conversions.
+Covers the `units` domain (length, weight, temperature conversions) and the
+`web` layer (formatting/validation helpers, category config, and integration
+tests against the FastAPI routes via `TestClient`).
 
-## Build
+## Linting & formatting
 
 ```bash
-pnpm build
+uv run ruff check .
+uv run black --check .
 ```

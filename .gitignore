@@ -1,25 +1,22 @@
-# dependencies
-node_modules/
-.pnpm-store/
-
-# turborepo
-.turbo/
-
-# builds
-dist/
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
 build/
-.next/
-out/
+dist/
+
+# testing
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # env
 .env
 .env.local
-.env.*.local
-
-# logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
 
 # editor
 .vscode/*
@@ -28,6 +25,3 @@ pnpm-debug.log*
 
 # os
 .DS_Store
-
-# typescript
-*.tsbuildinfo

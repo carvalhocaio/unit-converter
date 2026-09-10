@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Unit Converter</title>
+    <meta
+      name="description"
+      content="Convert between different units of length, weight, and temperature."
+    />
+    <link rel="stylesheet" href="{{ url_for('static', path='globals.css') }}" />
+  </head>
+  <body>
+    <main class="card">
+      <h1>Unit Converter</h1>
+      {% include "partials/nav_tabs.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

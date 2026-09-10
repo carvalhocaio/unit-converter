@@ -1,0 +1,5 @@
+{% extends "base.html" %} {% block content %} {% if summary is defined %} {%
+include "partials/result_card.html" %} {% else %} {% if error %}
+<p class="error">{{ error }}</p>
+{% endif %} {% include "partials/conversion_form.html" %} {% endif %} {%
+endblock %}

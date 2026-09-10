@@ -1,0 +1,9 @@
+<nav class="tabs">
+  {% for nav_category in categories %}
+  <a
+    href="/{{ nav_category.slug }}"
+    data-active="{{ 'true' if nav_category.slug == active_slug else 'false' }}"
+    >{{ nav_category.nav_label }}</a
+  >
+  {% endfor %}
+</nav>

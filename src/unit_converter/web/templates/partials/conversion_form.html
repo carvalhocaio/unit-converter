@@ -1,0 +1,29 @@
+<form method="post" action="/{{ category.slug }}">
+  <div class="field">
+    <label for="value">{{ category.field_label }}</label>
+    <input id="value" name="value" type="number" step="any" required />
+  </div>
+
+  <div class="field">
+    <label for="from">Unit to convert from</label>
+    <select id="from" name="from" required>
+      {% for unit in category.units %}
+      <option value="{{ unit.value }}">{{ unit.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="to">Unit to convert to</label>
+    <select id="to" name="to" required>
+      {% for unit in category.units %}
+      <option
+        value="{{ unit.value }}"
+        {% if unit.value == category.default_to_value %}selected{% endif %}
+      >{{ unit.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <button type="submit">Convert</button>
+</form>
